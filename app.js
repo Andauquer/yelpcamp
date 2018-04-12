@@ -23,8 +23,10 @@ var commentRoutes     = require("./routes/comments"),
     
 // Seediamos la base de datos al inicio.
 // seedDB();
-// Conectamos nuestra aplicacion a la BD de Mongo
-mongoose.connect("mongodb://localhost/yelp_camp");
+// Conectamos nuestra aplicacion a la BD de Mongo (Pruebas)
+//mongoose.connect("mongodb://localhost/yelp_camp");
+// Conectamos nuestra aplicacion a la BD de Mongo en MLab (Produccion)
+mongoose.connect("mongodb://Andauquer:07laespumadelasirenaGARCHADA23@ds143039.mlab.com:43039/andauquer-yelpcamp");
 // Le indicamos a Express donde buscar el CSS.
 app.use(express.static("public"));
 // Usamos esta linea para evitar escribir .ejs en cada render.
