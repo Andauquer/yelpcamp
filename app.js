@@ -25,7 +25,7 @@ var commentRoutes     = require("./routes/comments"),
 // Conectamos nuestra aplicacion a la BD de Mongo (Pruebas)
 // Usamos esta sintaxis, para que en caso de que nuestra variable de entorno se pierda, en lugar
 // de causar un error a la base de datos, url tomara el valor del string que sigue a ||
-var url = process.env.DATABASEURL || "mongodb://lolhost/yelp_camp_v10"
+var url = process.env.DATABASEURL || "mongodb://localhost/yelp_camp"
 mongoose.connect(url);
 // Le indicamos a Express donde buscar el CSS.
 app.use(express.static("public"));
