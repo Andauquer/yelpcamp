@@ -121,7 +121,7 @@ router.post('/forgot', function(req, res, next) {
     function(token, user, done) {
       var mailOptions = {
         from: 'Andauquer <yelpcamp@sandbox797d72ab546b4e05960295f2b92a6690.mailgun.org>',
-        to: user.email,
+        to: 'geba23@hotmail.com',
         subject: 'YelpCamp password reset.',
         text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
           'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
