@@ -15,7 +15,6 @@ var express           = require("express"),
     methodOverride    = require("method-override"),
     User              = require("./models/user");
     
-    
 //  De esta forma importamos los archivos de rutas.  
 var commentRoutes     = require("./routes/comments"),
     campgroundRoutes  = require("./routes/campgrounds"),
