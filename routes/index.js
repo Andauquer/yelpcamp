@@ -8,6 +8,13 @@ var Campground  = require("../models/campground");
 // porque cuando nosotros hacemos un require de un archivo, si este se llama
 // index.js no es necesario especificarlo en la ruta, como en este caso.
 var middleware  = require("../middleware");
+// Estos dos componentes son necesarios para enviar emails.
+var async       = require("async");
+var crypto      = require("crypto");
+// Configuracion de Mailgun
+var api_key     = process.env.MAILGUNAPIKEY; 
+var domain      = process.env.MAILGUNDOMAIN;
+var mailgun     = require('mailgun-js')({apiKey: api_key, domain: domain});
 
 // ----- ROOT PATH -----
 router.get("/", function(req, res){
@@ -75,6 +82,128 @@ router.get("/logout", function(req, res) {
     req.flash("success", "Logged you out.");
     res.redirect("/campgrounds");
 });
+
+// ===============================
+// RESET PASSWORD ROUTES
+// ===============================
+
+// ----- SHOW FORGOT PASSWORD FORM -----
+router.get('/forgot', function(req, res) {
+  res.render('forgot');
+});
+
+// ----- POST THE FORGOT PASSWORD FORM -----
+router.post('/forgot', function(req, res, next) {
+  async.waterfall([
+    function(done) {
+      // Aqui creamos el token para enviar el correo.
+      crypto.randomBytes(20, function(err, buf) {
+        var token = buf.toString('hex');
+        done(err, token);
+      });
+    },
+    function(token, done) {
+      User.findOne({ email: req.body.email }, function(err, user) {
+        if (!user) {
+          req.flash('error', 'No account with that email address exists.');
+          return res.redirect('/forgot');
+        }
+
+        user.resetPasswordToken = token;
+        // Aqui especificamos el tiempo que el token estara activo.
+        user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+
+        user.save(function(err) {
+          done(err, token, user);
+        });
+      });
+    },
+    function(token, user, done) {
+      var mailOptions = {
+        from: 'Andauquer <yelpcamp@hotmail.com>',
+        to: user.email,
+        subject: 'YelpCamp password reset.',
+        text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
+          'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
+          'https://' + req.headers.host + '/reset/' + token + '\n\n' +
+          'Please note, this link is only valid for 1 hour from the time requested.\n\n' +
+          'If you did not request this, please ignore this email and your password will remain unchanged.\n'
+      };
+      mailgun.messages().send(mailOptions, function (error, body) {
+        if(error){
+          req.flash("error", "Couldn't send recovery email");
+          console.log(error);
+        }
+        console.log('mail sent');
+        req.flash('success', 'An e-mail has been sent to ' + user.username + ' with further instructions 👍');
+        done(error, 'done');
+      });
+    }
+  ], function(err) {
+    if (err) return next(err);
+    res.redirect('/forgot');
+  });
+});
+
+// ----- SHOW THE RESET PASSWORD FORM -----
+router.get('/reset/:token', function(req, res) {
+  User.findOne({ resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() } }, function(err, user) {
+    if (!user) {
+      req.flash('error', 'Password reset token is invalid or has expired.');
+      return res.redirect('/forgot');
+    }
+    res.render('reset', {token: req.params.token});
+  });
+});
+
+// ----- POST THE RESET PASSWORD FORM -----
+router.post('/reset/:token', function(req, res) {
+  async.waterfall([
+    function(done) {
+      User.findOne({ resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() } }, function(err, user) {
+        if (!user) {
+          req.flash('error', 'Password reset token is invalid or has expired.');
+          return res.redirect('back');
+        }
+        if(req.body.password === req.body.confirm) {
+          user.setPassword(req.body.password, function(err) {
+            user.resetPasswordToken = undefined;
+            user.resetPasswordExpires = undefined;
+
+            user.save(function(err) {
+              req.logIn(user, function(err) {
+                done(err, user);
+              });
+            });
+          })
+        } else {
+            req.flash("error", "Passwords do not match.");
+            return res.redirect('back');
+        }
+      });
+    },
+    function(user, done) {
+      var mailOptions = {
+        to: user.email,
+        from: 'Andauquer <yelpcamp@hotmail.com>',
+        subject: 'Your password has been changed',
+        text: 'Hello,\n\n' +
+          'This is a confirmation that the password for your account ' + user.username + ' has just been changed.\n' +
+          'If you did not do this, please contact us on we@wantt.it ASAP.\n'
+      };
+      mailgun.messages().send(mailOptions, function (error, body) {
+        if(error){
+            console.log(error);
+        }
+        req.flash('success', 'Your password has been changed 🎉');
+        done(error);
+      });
+    }
+  ], function(err) {
+    res.redirect('/campgrounds');
+  });
+});
+
 
 // ===============================
 // USER PROFILE ROUTES
