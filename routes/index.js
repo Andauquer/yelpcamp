@@ -126,7 +126,11 @@ router.post('/forgot', function(req, res, next) {
         text: 'and easy to do anywhere, even with Node.js',
         html: '<strong>and easy to do anywhere, even with Node.js</strong>',
       };
-      sgMail.send(msg);
+      sgMail.send(msg, function(err) {
+        console.log('mail sent');
+        req.flash('success', 'An e-mail has been sent to ' + user.email + ' with further instructions.');
+        done(err, 'done');
+      });
     }
   ], function(err) {
     if (err) return next(err);
