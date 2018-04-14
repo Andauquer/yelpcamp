@@ -120,11 +120,13 @@ router.post('/forgot', function(req, res, next) {
     },
     function(token, user, done) {
       const msg = {
-        to: 'geba23@hotmail.com',
-        from: 'yelpcamp@example.com',
-        subject: 'Sending with SendGrid is Fun',
-        text: 'and easy to do anywhere, even with Node.js',
-        html: '<strong>and easy to do anywhere, even with Node.js</strong>',
+        to: user.email,
+        from: 'andauquer-yelpcamp@noreply.com',
+        subject: 'YelpCamp Password Reset',
+        text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
+              'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
+              'http://' + req.headers.host + '/reset/' + token + '\n\n' +
+              'If you did not request this, please ignore this email and your password will remain unchanged.\n'
       };
       sgMail.send(msg, function(err) {
         console.log('mail sent');
@@ -176,20 +178,16 @@ router.post('/reset/:token', function(req, res) {
       });
     },
     function(user, done) {
-      var mailOptions = {
+      const msg = {
         to: user.email,
-        from: 'Andauquer <yelpcamp@hotmail.com>',
+        from: 'andauquer-yelpcamp@noreply.com',
         subject: 'Your password has been changed',
-        text: 'Hello,\n\n' +
-          'This is a confirmation that the password for your account ' + user.username + ' has just been changed.\n' +
-          'If you did not do this, please contact us on we@wantt.it ASAP.\n'
+        text: 'Hello,\n\n' + 
+              'This is a confirmation that the password for your account ' + user.email + ' has just been changed.\n'
       };
-      mailgun.messages().send(mailOptions, function (error, body) {
-        if(error){
-            console.log(error);
-        }
-        req.flash('success', 'Your password has been changed 🎉');
-        done(error);
+      sgMail.send(msg, function(err) {
+        req.flash('success', 'Success! Your password has been changed.');
+        done(err);
       });
     }
   ], function(err) {
