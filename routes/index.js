@@ -11,10 +11,10 @@ var middleware  = require("../middleware");
 // Estos dos componentes son necesarios para enviar emails.
 var async       = require("async");
 var crypto      = require("crypto");
-// Configuracion de Mailgun
-var api_key     = process.env.MAILGUNAPIKEY; 
-var domain      = process.env.MAILGUNDOMAIN;
-var mailgun     = require('mailgun-js')({apiKey: api_key, domain: domain});
+// Configuracion de Sendgrid
+const sgMail    = require('@sendgrid/mail');
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
 
 // ----- ROOT PATH -----
 router.get("/", function(req, res){
@@ -119,6 +119,7 @@ router.post('/forgot', function(req, res, next) {
       });
     },
     function(token, user, done) {
+<<<<<<< HEAD
       var mailOptions = {
         from: 'Andauquer <yelpcamp@sandbox797d72ab546b4e05960295f2b92a6690.mailgun.org>',
         to: 'geba23@hotmail.com',
@@ -128,16 +129,16 @@ router.post('/forgot', function(req, res, next) {
           'https://' + req.headers.host + '/reset/' + token + '\n\n' +
           'Please note, this link is only valid for 1 hour from the time requested.\n\n' +
           'If you did not request this, please ignore this email and your password will remain unchanged.\n'
+=======
+      const msg = {
+        to: 'geba23@hotmail.com',
+        from: 'yelpcamp@example.com',
+        subject: 'Sending with SendGrid is Fun',
+        text: 'and easy to do anywhere, even with Node.js',
+        html: '<strong>and easy to do anywhere, even with Node.js</strong>',
+>>>>>>> resetpasswords
       };
-      mailgun.messages().send(mailOptions, function (error, body) {
-        if(error){
-          req.flash("error", "Couldn't send recovery email");
-          console.log(error);
-        }
-        console.log('mail sent');
-        req.flash('success', 'An e-mail has been sent to ' + user.username + ' with further instructions 👍');
-        done(error, 'done');
-      });
+      sgMail.send(msg);
     }
   ], function(err) {
     if (err) return next(err);
